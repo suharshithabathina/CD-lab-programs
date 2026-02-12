@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+int isKeyword(char *str) {
+    char keywords[10][10] = {"int","float","if","else","while","for","return","char","double","break"};
+    for (int i = 0; i < 10; i++)
+        if (strcmp(str, keywords[i]) == 0)
+            return 1;
+    return 0;
+}
+
+int main() {
+    FILE *fp;
+    char ch, buffer[50];
+    int i = 0;
+
+    fp = fopen("input.txt", "r");
+    if (!fp) {
+        printf("Cannot open file\n");
+        return 0;
+    }
+
+    while ((ch = fgetc(fp)) != EOF) {
+
+        // IDENTIFIERS & KEYWORDS
+        if (isalpha(ch) || ch == '_') {
+            buffer[i++] = ch;
+            while (isalnum(ch = fgetc(fp)) || ch == '_')
+                buffer[i++] = ch;
+
+            buffer[i] = '\0';
+            i = 0;
+            fseek(fp, -1, SEEK_CUR);
+
+            if (isKeyword(buffer))
+                printf("%s : Keyword\n", buffer);
+            else
+                printf("%s : Identifier\n", buffer);
+        }
+
+        // CONSTANTS
+        else if (isdigit(ch)) {
+            buffer[i++] = ch;
+            while (isdigit(ch = fgetc(fp)) || ch == '.')
+                buffer[i++] = ch;
+
+            buffer[i] = '\0';
+            i = 0;
+            fseek(fp, -1, SEEK_CUR);
+
+            printf("%s : Constant\n", buffer);
+        }
+
+        // OPERATORS
+        else if (ch=='+'||ch=='-'||ch=='*'||ch=='/'||ch=='='||ch=='<'||ch=='>'||ch=='!') {
+            char next = fgetc(fp);
+            if ((ch=='='&&next=='=')||(ch=='<'&&next=='=')||(ch=='>'&&next=='=')||(ch=='!'&&next=='='))
+                printf("%c%c : Operator\n", ch, next);
+            else {
+                printf("%c : Operator\n", ch);
+                fseek(fp, -1, SEEK_CUR);
+            }
+        }
+
+        // SPECIAL SYMBOLS
+        else if (ch=='('||ch==')'||ch=='{'||ch=='}'||ch==';'||ch==',')
+            printf("%c : Special Symbol\n", ch);
+    }
+
+    fclose(fp);
+    return 0;
+}
+
